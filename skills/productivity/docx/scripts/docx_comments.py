@@ -30,7 +30,7 @@ from docx import Document
 from docx.opc.constants import RELATIONSHIP_TYPE as RT
 from lxml import etree
 
-from docx_common import iter_part_roots
+from docx_common import ensure_comment_styles, iter_part_roots
 
 W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 COMMENTS_CT = ("application/vnd.openxmlformats-officedocument"
@@ -269,8 +269,10 @@ def main() -> int:
         else:
             cid = add_comment_xml(doc, runs, args.text, args.author,
                                   args.initials)
+        added_styles = ensure_comment_styles(doc)
         result = {"ok": True, "comment_id": cid,
-                  "native_api": native, "anchored_to": args.target}
+                  "native_api": native, "anchored_to": args.target,
+                  "styles_defined": added_styles}
     else:  # delete
         if not delete_comment(doc, args.id):
             print(json.dumps({"ok": False,

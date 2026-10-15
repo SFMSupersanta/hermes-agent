@@ -1,7 +1,7 @@
 ---
 name: docx
 description: Create, read, edit, template, and review Word .docx files.
-version: 1.1.0
+version: 1.1.1
 author: Nous Research
 license: MIT
 platforms: [linux, macos, windows]
@@ -153,6 +153,12 @@ cannot render PDFs, and layout fidelity requires a real renderer.
   and table-row revisions, format-change records, and moves are detected
   by `--revisions` but not auto-resolved — see
   `references/revisions-and-comments.md` and hand those to Word.
+- **Comment styles.** `docx_comments.py add` writes the `CommentReference`
+  character style (and defines `CommentReference`/`CommentText` when the
+  document lacks them — python-docx's default template never defines
+  them, so a raw `add_comment` leaves the package referencing an
+  undefined style id; Word tolerates the latent id, stricter consumers
+  and `docx_validate.py` report `missing-style`).
 - **Comment threading.** Replies and "resolved" status live in
   `commentsExtended.xml`, which this skill ignores; comments it adds are
   plain top-level comments.

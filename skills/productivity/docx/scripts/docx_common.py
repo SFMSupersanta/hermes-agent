@@ -47,6 +47,39 @@ def iter_part_roots(doc):
                 yield part._element
 
 
+def ensure_comment_styles(doc) -> list:
+    """Define the comment styles the document is missing; return their ids.
+
+    Adding a comment writes `w:rStyle w:val="CommentReference"`, but the
+    python-docx default template never defines that style, so the package
+    ends up referencing an undefined style id. Word tolerates it (latent
+    built-in), but stricter consumers and `docx_validate.py` flag it, so
+    define the standard Word definitions before saving.
+    """
+    from docx.enum.style import WD_STYLE_TYPE
+    from docx.shared import Pt
+
+    wanted = [
+        ("Comment Reference", WD_STYLE_TYPE.CHARACTER, 8, False),
+        ("Comment Text", WD_STYLE_TYPE.PARAGRAPH, 9, True),
+    ]
+    defined = {s.style_id for s in doc.styles}
+    added = []
+    for name, style_type, half_pt_pt, space_after_zero in wanted:
+        style_id = name.replace(" ", "")
+        if style_id in defined:
+            continue
+        try:
+            style = doc.styles.add_style(name, style_type, builtin=True)
+        except ValueError:  # already present under a different id
+            continue
+        style.font.size = Pt(half_pt_pt)
+        if space_after_zero:
+            style.paragraph_format.space_after = Pt(0)
+        added.append(style_id)
+    return added
+
+
 def replace_in_paragraph(para, old: str, new: str) -> int:
     """Replace `old` with `new` in a paragraph, preserving run formatting.
 

@@ -391,6 +391,17 @@ class TestComments:
         # file still opens cleanly
         assert Document(str(out)).paragraphs[1].text == "Second paragraph."
 
+    def test_add_defines_referenced_styles(self, base: Path, tmp_path: Path):
+        """Adding a comment must not leave an undefined style referenced."""
+        out = tmp_path / "styled.docx"
+        run("docx_comments.py", "add", base, "--target", "Second paragraph",
+            "--text", "style check", "--author", "Reviewer", "-o", out)
+        # docx_validate exits 1 on errors, so run() fails the test if the
+        # package references CommentReference without defining it
+        assert run("docx_validate.py", out)["ok"] is True
+        ids = {s.style_id for s in Document(str(out)).styles}
+        assert {"CommentReference", "CommentText"} <= ids
+
     def test_missing_target_fails(self, base: Path, tmp_path: Path):
         proc = run_raw("docx_comments.py", "add", base, "--target",
                        "not present", "--text", "x", "-o",
